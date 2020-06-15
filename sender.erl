@@ -9,10 +9,14 @@ loop(Socket, Packet, Count, ReceiverNum) ->
   Port = 8080 + Count rem ReceiverNum,
   ok = gen_udp:send(
     Socket,
-    {127,0,0,1},
+    {10,61,64,51},
     Port,
     <<Packet/binary, BinCount/binary>>
   ),
+  case Count rem 1000 of
+    0 -> timer:sleep(10);
+    _ -> ok
+  end,
   loop(Socket, Packet, Count + 1, ReceiverNum).
 
 create(_, 0, ReceiverNum, SocketList) ->
