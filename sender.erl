@@ -9,14 +9,10 @@ loop(Socket, Packet, Count, ReceiverNum) ->
   Port = 8080 + Count rem ReceiverNum,
   ok = gen_udp:send(
     Socket,
-    {10,61,64,51},
+    {127,0,0,1},
     Port,
     <<Packet/binary, BinCount/binary>>
   ),
-  case Count rem 1000 of
-    0 -> timer:sleep(10);
-    _ -> ok
-  end,
   loop(Socket, Packet, Count + 1, ReceiverNum).
 
 create(_, 0, ReceiverNum, SocketList) ->
@@ -34,6 +30,8 @@ create(StartPort, ProcessNum, ReceiverNum, SocketList) ->
 send([], _, _, _) ->
   io:fwrite("Done!~n");
 send([Socket | Remain], Packet, Count, ReceiverNum) ->
+  {ok, [{sndbuf, S}, {recbuf, R}]} = inet:getopts(Socket, [sndbuf, recbuf]),
+  inet:setopts(Socket, [{buffer, max(S, R)}]),
   Pid = spawn(sender, loop, [Socket, Packet, Count, ReceiverNum]),
-  {ok, _} = timer:exit_after(1000, Pid, "Time out"),
+  {ok, _} = timer:exit_after(5000, Pid, "Time out"),
   send(Remain, Packet, Count, ReceiverNum).

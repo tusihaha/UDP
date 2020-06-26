@@ -12,8 +12,11 @@ create(ProcessNum) ->
     binary,
     inet,
     {active, false},
-    {reuseaddr, true}
+    {reuseaddr, true},
+    {read_packets, 30000}
   ]),
+  {ok, [{sndbuf, S}, {recbuf, R}]} = inet:getopts(Socket, [sndbuf, recbuf]),
+  inet:setopts(Socket, [{buffer, max(S, R)}]),
   spawn(receiver, loop, [Socket, 0]),
   create(ProcessNum - 1).
 
